@@ -34,6 +34,10 @@ app.use(
   }),
 );
 
+app.use((req, res) => {
+  res.status(404).send("Page not found - 404");
+})
+
 /** GET **/
 
 app.get("/", (req, res) => {
@@ -93,10 +97,6 @@ app.get("/members", (req, res) => {
     <img src='/images/${image}' alt='${image}'>
     <form action='/logout' method='post'><button>Log out</button></form>
   `);
-});
-
-app.get("/*does_not_exist", (req, res) => {
-  res.status(404).send("Page not found - 404");
 });
 
 /** POST **/
