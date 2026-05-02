@@ -13,16 +13,18 @@ const mongodb_host = process.env.MONGODB_HOST;
 const mongodb_user = process.env.MONGODB_USER;
 const mongodb_password = process.env.MONGODB_PASSWORD;
 const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
+const mongodb_database = process.env.MONGODB_DATABASE;
 
 const { database } = require("./databaseConnection.js");
-const userCollection = database.db("users").collection("users");
+const userCollection = database.db(mongodb_database).collection("users");
 
-const atlasURI = `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${"session"}`;
+const atlasURI = `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/`;
 const expireTime = 60 * 60; // 1 hour
 
 const mongoStore = MongoStore.create({
   mongoUrl: atlasURI,
-  // crypto: { secret: mongodb_session_secret },
+  crypto: { secret: mongodb_session_secret },
+  dbName: mongodb_database,
   ttl: expireTime,
 });
 
@@ -112,8 +114,6 @@ app.get("/members", async (req, res) => {
     return;
   }
 
-  console.log(userCollection)
-
   const images = ["burger.webp", "pizza.webp", "sushi.webp"];
   const image = images[Math.floor(Math.random() * images.length)];
 
@@ -156,6 +156,11 @@ app.post("/signup", async (req, res) => {
   req.session.save((err) => {
     res.redirect("/members");
   });
+
+  console.log(
+    "secret length:",
+    (process.env.MONGODB_SESSION_SECRET || "").length,
+  );
 });
 
 app.post("/login", async (req, res) => {
@@ -174,7 +179,9 @@ app.post("/login", async (req, res) => {
   req.session.loggedIn = true;
   req.session.invalidInputs = false;
 
-  req.session.save(() => res.redirect("/members"));
+  req.session.save((err) => {
+    res.redirect("/members");
+  });
 });
 
 app.post("/logout", (req, res) => {
