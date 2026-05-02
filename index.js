@@ -26,7 +26,9 @@ const expireTime = 60 * 60; // 1 hour
 
 const mongoStore = MongoStore.create({
   mongoUrl: atlasURI,
-  ttl: expireTime,
+  crypto: {
+    secret: mongodb_session_secret,
+  },
 });
 
 const schema = Joi.object({
@@ -50,6 +52,7 @@ app.use(
     store: mongoStore,
     saveUninitialized: false,
     resave: true,
+    cookie: { maxAge: expireTime }
   }),
 );
 
