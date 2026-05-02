@@ -3,12 +3,10 @@ const bcrypt = require("bcrypt");
 const express = require("express");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
+const Joi = require("joi");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
-app.use(express.static("public"));
 
 const node_session_secret = process.env.NODE_SESSION_SECRET;
 const mongodb_host = process.env.MONGODB_HOST;
@@ -17,10 +15,34 @@ const mongodb_password = process.env.MONGODB_PASSWORD;
 const mongodb_database = process.env.MONGODB_DATABASE;
 const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
 
+const { database } = require("./databaseConnection.js");
+const userCollection = database.db(mongodb_user).collection("users");
+
+const atlasURI = `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_database}`;
+const expireTime = 60 * 60; // 1 hour
+
 const mongoStore = MongoStore.create({
-  mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_database}`,
-  ttl: 60 * 60, // session expires after 1 hour
+  mongoUrl: atlasURI,
+  ttl: expireTime,
+  crypto: {
+    secret: mongodb_session_secret,
+  },
 });
+
+const schema = Joi.object({
+  username: Joi.string().alphanum().min(3).max(30).required(),
+
+  password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")),
+
+  email: Joi.string().email({
+    minDomainSegments: 2,
+    tlds: { allow: ["com", "net"] },
+  }),
+});
+
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(express.static("public"));
 
 app.use(
   session({
@@ -66,9 +88,9 @@ app.get("/signup", (req, res) => {
   res.send(`
     <h3>Create an account</h3>
     <form action='/signup' method='post' style='display: flex; flex-direction: column; width: 256px'>
-        <input name='username' type='text' placeholder='Username' required='true'></input>
-        <input name='email' type='email' placeholder='Email' required='true'></input>
-        <input name='password' type='password' placeholder='Password' required='true'></input>
+        <input name='username' type='text' placeholder='Username'></input>
+        <input name='email' type='email' placeholder='Email'></input>
+        <input name='password' type='password' placeholder='Password'></input>
         <button style='width: fit-content'>Submit</button>
     </form>
   `);
@@ -94,34 +116,39 @@ app.get("/members", (req, res) => {
 
 /** POST **/
 
-app.post("/signup", (req, res) => {
-  const username = req.body.username || null;
-  const email = req.body.email || null;
-  const password = req.body.password || null;
+app.post("/signup", async (req, res) => {
+  try {
+    const username = req.body.username || null;
+    const email = req.body.email || null;
+    const password = req.body.password || null;
 
-  if (!username || !email || !password) {
-    console.log("Sign up failed.");
-    return;
+    const value = schema.validate({ username, password, email });
+
+    if (value.error) {
+      console.log(value.error.details[0].message);
+      res.redirect("/signup");
+      return;
+    }
+
+    const saltRounds = 10;
+    const hashedPassword = bcrypt.hashSync(password, saltRounds);
+
+    await userCollection.insertOne({ username: username, password: hashedPassword, email: email });
+
+    res.redirect("/login");
+  } catch (error) {
+    console.log("Error: " + error);
   }
-
-  req.session.username = username;
-  req.session.email = email;
-
-  const saltRounds = 10;
-  req.session.password = bcrypt.hashSync(password, saltRounds);
-
-  res.redirect("/login");
 });
 
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
   const email = req.body.email || null;
   const password = req.body.password || null;
 
-  if (
-    email != req.session.email ||
-    !bcrypt.compareSync(password, req.session.password)
-  ) {
-    console.log("Incorrect email or password");
+  const user = await userCollection.findOne({ email });
+
+  if (!user || !bcrypt.compareSync(password, user.password)) {
+    console.error("Invalid email or password.");
     res.redirect("/login");
     return;
   }
@@ -137,7 +164,7 @@ app.post("/logout", (req, res) => {
 
 app.use((req, res) => {
   res.status(404).send("Page not found - 404");
-})
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
