@@ -41,8 +41,6 @@ const schema = Joi.object({
   }),
 });
 
-app.set("trust proxy", 1);
-
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static("public"));
@@ -100,6 +98,9 @@ app.get("/signup", (req, res) => {
 });
 
 app.get("/members", async (req, res) => {
+  console.log("[members] sessionID:", req.sessionID);
+  console.log("[members] session:", req.session);
+  console.log("[members] cookie header:", req.headers.cookie);
   if (!req.session.loggedIn) {
     res.redirect("/");
     return;
@@ -120,35 +121,37 @@ app.get("/members", async (req, res) => {
 /** POST **/
 
 app.post("/signup", async (req, res) => {
-  try {
-    const username = req.body.username;
-    const email = req.body.email;
-    const password = req.body.password;
+  const username = req.body.username;
+  const email = req.body.email;
+  const password = req.body.password;
 
-    const value = schema.validate({ username, password, email });
+  const value = schema.validate({ username, password, email });
 
-    if (value.error) {
-      console.log(value.error.details[0].message);
-      res.redirect("/signup");
-      return;
-    }
-
-    const saltRounds = 10;
-    const hashedPassword = bcrypt.hashSync(password, saltRounds);
-
-    req.session.username = username;
-    req.session.loggedIn = true;
-
-    await userCollection.insertOne({
-      username: username,
-      password: hashedPassword,
-      email: email,
-    });
-
-    req.session.save(() => res.redirect("/members"));
-  } catch (error) {
-    console.log("Error: " + error);
+  if (value.error) {
+    console.log(value.error.details[0].message);
+    res.redirect("/signup");
+    return;
   }
+
+  const saltRounds = 10;
+  const hashedPassword = bcrypt.hashSync(password, saltRounds);
+
+  req.session.username = username;
+  req.session.loggedIn = true;
+
+  await userCollection.insertOne({
+    username: username,
+    password: hashedPassword,
+    email: email,
+  });
+
+  req.session.save((err) => {
+    console.log("[signup] save err:", err);
+    console.log("[signup] sessionID:", req.sessionID);
+    console.log("[signup] session:", req.session);
+    console.log("[signup] set-cookie:", res.getHeader("set-cookie"));
+    res.redirect("/members");
+  });
 });
 
 app.post("/login", async (req, res) => {
@@ -162,7 +165,7 @@ app.post("/login", async (req, res) => {
     res.redirect("/login");
     return;
   }
-  
+
   req.session.loggedIn = true;
 
   req.session.save(() => res.redirect("/members"));
