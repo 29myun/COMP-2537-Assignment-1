@@ -19,7 +19,7 @@ const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
 const { database } = require("./databaseConnection.js");
 const userCollection = database.db(mongodb_users_database).collection("users");
 
-const atlasURI = `mongodb+srv://${mongodb_session_database}:${mongodb_password}@${mongodb_host}/${mongodb_database}`;
+const atlasURI = `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_session_database}`;
 const expireTime = 60 * 60; // 1 hour
 
 const mongoStore = MongoStore.create({
