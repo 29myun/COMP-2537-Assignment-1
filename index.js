@@ -141,6 +141,7 @@ app.post("/signup", async (req, res) => {
     });
 
     req.session.username = username;
+    req.session.loggedIn = true;
 
     res.redirect("/members");
   } catch (error) {
