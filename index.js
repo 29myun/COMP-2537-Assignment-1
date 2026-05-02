@@ -31,10 +31,6 @@ app.use(
   }),
 );
 
-app.use((req, res) => {
-  res.status(404).send("Page not found - 404");
-})
-
 /** GET **/
 
 app.get("/", (req, res) => {
@@ -138,6 +134,10 @@ app.post("/logout", (req, res) => {
   req.session.loggedIn = false;
   res.redirect("/");
 });
+
+app.use((req, res) => {
+  res.status(404).send("Page not found - 404");
+})
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
