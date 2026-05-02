@@ -71,6 +71,19 @@ app.get("/", async (req, res) => {
 });
 
 app.get("/login", (req, res) => {
+  if (req.session.invalidInputs) {
+    res.send(`
+    <h3>Log into your account</h3>
+    <form action='login' method='post' style='display: flex; flex-direction: column; width: 256px'>
+        <input name='email' type='email' placeholder='Email' required='true'></input>
+        <input name='password' type='password' placeholder='Password' required='true'></input>
+        <button style='width: fit-content'>Submit</button>
+    </form>
+    <h3 style='color: red'>Invalid password</h3>
+  `);
+    return;
+  }
+
   res.send(`
     <h3>Log into your account</h3>
     <form action='login' method='post' style='display: flex; flex-direction: column; width: 256px'>
@@ -98,6 +111,8 @@ app.get("/members", async (req, res) => {
     res.redirect("/");
     return;
   }
+
+  console.log(userCollection)
 
   const images = ["burger.webp", "pizza.webp", "sushi.webp"];
   const image = images[Math.floor(Math.random() * images.length)];
@@ -139,10 +154,6 @@ app.post("/signup", async (req, res) => {
   });
 
   req.session.save((err) => {
-    console.log("[signup] save err:", err);
-    console.log("[signup] sessionID:", req.sessionID);
-    console.log("[signup] session:", req.session);
-    console.log("[signup] set-cookie:", res.getHeader("set-cookie"));
     res.redirect("/members");
   });
 });
@@ -155,11 +166,13 @@ app.post("/login", async (req, res) => {
 
   if (!user || !bcrypt.compareSync(password, user.password)) {
     console.error("Invalid email or password.");
+    req.session.invalidInputs = true;
     res.redirect("/login");
     return;
   }
 
   req.session.loggedIn = true;
+  req.session.invalidInputs = false;
 
   req.session.save(() => res.redirect("/members"));
 });
