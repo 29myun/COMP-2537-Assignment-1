@@ -24,6 +24,7 @@ const expireTime = 60 * 60; // 1 hour
 
 const mongoStore = MongoStore.create({
   mongoUrl: atlasURI,
+  crypto: { secret: mongodb_session_secret },
   ttl: expireTime
 });
 
