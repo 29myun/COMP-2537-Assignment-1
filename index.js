@@ -12,13 +12,14 @@ const node_session_secret = process.env.NODE_SESSION_SECRET;
 const mongodb_host = process.env.MONGODB_HOST;
 const mongodb_user = process.env.MONGODB_USER;
 const mongodb_password = process.env.MONGODB_PASSWORD;
-const mongodb_database = process.env.MONGODB_DATABASE;
+const mongodb_session_database = process.env.MONGODB_SESSION_DATABASE;
+const mongodb_users_database = process.env.MONGODB_USER_DATABASE;
 const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
 
 const { database } = require("./databaseConnection.js");
-const userCollection = database.db(mongodb_database).collection("users");
+const userCollection = database.db(mongodb_users_database).collection("users");
 
-const atlasURI = `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_database}`;
+const atlasURI = `mongodb+srv://${mongodb_session_database}:${mongodb_password}@${mongodb_host}/${mongodb_database}`;
 const expireTime = 60 * 60; // 1 hour
 
 const mongoStore = MongoStore.create({
@@ -118,9 +119,9 @@ app.get("/members", async (req, res) => {
 
 app.post("/signup", async (req, res) => {
   try {
-    const username = req.body.username || null;
-    const email = req.body.email || null;
-    const password = req.body.password || null;
+    const username = req.body.username;
+    const email = req.body.email;
+    const password = req.body.password;
 
     const value = schema.validate({ username, password, email });
 
@@ -148,8 +149,8 @@ app.post("/signup", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-  const email = req.body.email || null;
-  const password = req.body.password || null;
+  const email = req.body.email;
+  const password = req.body.password;
 
   const user = await userCollection.findOne({ email });
 
