@@ -13,10 +13,10 @@ const mongodb_host = process.env.MONGODB_HOST;
 const mongodb_user = process.env.MONGODB_USER;
 const mongodb_password = process.env.MONGODB_PASSWORD;
 const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
-const mongodb_database = process.env.MONGODB_DATABASE;
+const mongodb_user_database = process.env.MONGODB_USER_DATABASE;
 
 const { database } = require("./databaseConnection.js");
-const userCollection = database.db(mongodb_database).collection("users");
+const userCollection = database.db(mongodb_user_database).collection("users");
 
 const atlasURI = `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/`;
 const expireTime = 60 * 60; // 1 hour
@@ -24,7 +24,6 @@ const expireTime = 60 * 60; // 1 hour
 const mongoStore = MongoStore.create({
   mongoUrl: atlasURI,
   crypto: { secret: mongodb_session_secret },
-  dbName: mongodb_database,
   ttl: expireTime,
 });
 
