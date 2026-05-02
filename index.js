@@ -19,9 +19,6 @@ const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
 
 const mongoStore = MongoStore.create({
   mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_database}`,
-  crypto: {
-    secret: mongodb_session_secret,
-  },
   ttl: 60 * 60, // session expires after 1 hour
 });
 
