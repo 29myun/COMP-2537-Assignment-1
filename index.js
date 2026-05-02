@@ -143,7 +143,7 @@ app.post("/signup", async (req, res) => {
     req.session.username = username;
     req.session.loggedIn = true;
 
-    res.redirect("/members");
+    req.session.save(() => res.redirect("/members"));
   } catch (error) {
     console.log("Error: " + error);
   }
@@ -162,7 +162,7 @@ app.post("/login", async (req, res) => {
   }
 
   req.session.loggedIn = true;
-  res.redirect("/members");
+  req.session.save(() => res.redirect("/members"));
 });
 
 app.post("/logout", (req, res) => {
