@@ -22,7 +22,8 @@ const expireTime = 60 * 60; // 1 hour
 
 const mongoStore = MongoStore.create({
   mongoUrl: atlasURI,
-  ttl: expireTime
+  crypto: { secret: mongodb_session_secret },
+  ttl: expireTime,
 });
 
 const schema = Joi.object({
@@ -93,9 +94,6 @@ app.get("/signup", (req, res) => {
 });
 
 app.get("/members", async (req, res) => {
-  console.log("[members] sessionID:", req.sessionID);
-  console.log("[members] session:", req.session);
-  console.log("[members] cookie header:", req.headers.cookie);
   if (!req.session.loggedIn) {
     res.redirect("/");
     return;
