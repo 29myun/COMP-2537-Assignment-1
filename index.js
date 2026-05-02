@@ -58,9 +58,11 @@ app.use(
 app.get("/", (req, res) => {
   const loggedIn = req.session.loggedIn;
 
+  const user = await userCollection.findOne({ email });
+
   if (loggedIn) {
     res.send(`
-      <h3>Hey, ${req.session.username}</h3>
+      <h3>Hey, ${user.username}</h3>
       <form action='/members' method='get'><button>Go to Members Area</button></form>
       <form action='/logout' method='post'><button>Log out</button></form>
     `);
@@ -96,19 +98,19 @@ app.get("/signup", (req, res) => {
   `);
 });
 
-app.get("/members", (req, res) => {
+app.get("/members", async (req, res) => {
   if (!req.session.loggedIn) {
     res.redirect("/");
     return;
   }
 
-  console.log(req.session.password);
-
   const images = ["burger.webp", "pizza.webp", "sushi.webp"];
   const image = images[Math.floor(Math.random() * images.length)];
 
+  const user = await userCollection.findOne({ email });
+
   res.send(`
-    <h1>Hello, ${req.session.username}!</h1>
+    <h1>Hello, ${user.username}!</h1>
     <img src='/images/${image}' alt='${image}'>
     <form action='/logout' method='post'><button>Log out</button></form>
   `);
@@ -136,6 +138,7 @@ app.post("/signup", async (req, res) => {
     await userCollection.insertOne({ username: username, password: hashedPassword, email: email });
 
     res.redirect("/login");
+    
   } catch (error) {
     console.log("Error: " + error);
   }
