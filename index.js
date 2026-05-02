@@ -41,6 +41,8 @@ const schema = Joi.object({
   }),
 });
 
+app.set("trust proxy", 1);
+
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static("public"));
@@ -134,14 +136,14 @@ app.post("/signup", async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = bcrypt.hashSync(password, saltRounds);
 
+    req.session.username = username;
+    req.session.loggedIn = true;
+
     await userCollection.insertOne({
       username: username,
       password: hashedPassword,
       email: email,
     });
-
-    req.session.username = username;
-    req.session.loggedIn = true;
 
     req.session.save(() => res.redirect("/members"));
   } catch (error) {
@@ -160,8 +162,9 @@ app.post("/login", async (req, res) => {
     res.redirect("/login");
     return;
   }
-
+  
   req.session.loggedIn = true;
+
   req.session.save(() => res.redirect("/members"));
 });
 
