@@ -16,7 +16,7 @@ const mongodb_database = process.env.MONGODB_DATABASE;
 const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
 
 const { database } = require("./databaseConnection.js");
-const userCollection = database.db(mongodb_user).collection("users");
+const userCollection = database.db(mongodb_database).collection("users");
 
 const atlasURI = `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_database}`;
 const expireTime = 60 * 60; // 1 hour
@@ -55,14 +55,12 @@ app.use(
 
 /** GET **/
 
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
   const loggedIn = req.session.loggedIn;
-
-  const user = await userCollection.findOne({ email });
 
   if (loggedIn) {
     res.send(`
-      <h3>Hey, ${user.username}</h3>
+      <h3>Hey, ${req.session.username}</h3>
       <form action='/members' method='get'><button>Go to Members Area</button></form>
       <form action='/logout' method='post'><button>Log out</button></form>
     `);
@@ -107,10 +105,10 @@ app.get("/members", async (req, res) => {
   const images = ["burger.webp", "pizza.webp", "sushi.webp"];
   const image = images[Math.floor(Math.random() * images.length)];
 
-  const user = await userCollection.findOne({ email });
+  const username = req.session.username;
 
   res.send(`
-    <h1>Hello, ${user.username}!</h1>
+    <h1>Hello, ${username}!</h1>
     <img src='/images/${image}' alt='${image}'>
     <form action='/logout' method='post'><button>Log out</button></form>
   `);
@@ -135,10 +133,15 @@ app.post("/signup", async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = bcrypt.hashSync(password, saltRounds);
 
-    await userCollection.insertOne({ username: username, password: hashedPassword, email: email });
+    await userCollection.insertOne({
+      username: username,
+      password: hashedPassword,
+      email: email,
+    });
+
+    req.session.username = username;
 
     res.redirect("/login");
-    
   } catch (error) {
     console.log("Error: " + error);
   }
