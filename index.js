@@ -15,8 +15,6 @@ const mongodb_password = process.env.MONGODB_PASSWORD;
 const mongodb_session_database = process.env.MONGODB_SESSION_DATABASE;
 const mongodb_users_database = process.env.MONGODB_USER_DATABASE;
 const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
-console.log("[boot] MONGODB_SESSION_SECRET length:", mongodb_session_secret?.length, "type:", typeof mongodb_session_secret);
-console.log("[boot] NODE_SESSION_SECRET length:", process.env.NODE_SESSION_SECRET?.length);
 
 const { database } = require("./databaseConnection.js");
 const userCollection = database.db("users").collection("users");
@@ -26,9 +24,7 @@ const expireTime = 60 * 60; // 1 hour
 
 const mongoStore = MongoStore.create({
   mongoUrl: atlasURI,
-  crypto: {
-    secret: mongodb_session_secret,
-  },
+  ttl: expireTime
 });
 
 const schema = Joi.object({
@@ -52,7 +48,6 @@ app.use(
     store: mongoStore,
     saveUninitialized: false,
     resave: true,
-    cookie: { maxAge: expireTime }
   }),
 );
 
