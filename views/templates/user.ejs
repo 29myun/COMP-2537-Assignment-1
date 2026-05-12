@@ -1,0 +1,11 @@
+<div class="col-12 d-flex align-items-center gap-3 py-2">
+    <div style="min-width: 160px;"><%= user.username %> (<%= user.role %>)</div>
+    <form action="/admin/promote" method="post">
+        <input type="hidden" name="username" value="<%= user.username %>">
+        <button type="submit" class="btn btn-danger btn-sm">Promote to Admin</button>
+    </form>
+    <form action="/admin/demote" method="post">
+        <input type="hidden" name="username" value="<%= user.username %>">
+        <button type="submit" class="btn btn-success btn-sm">Demote to User</button>
+    </form>
+</div>

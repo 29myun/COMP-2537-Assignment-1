@@ -43,6 +43,7 @@ const schema = Joi.object({
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static("public"));
+app.set("view engine", "ejs");
 
 app.use(
   session({
@@ -58,55 +59,62 @@ app.use(
 app.get("/", async (req, res) => {
   const loggedIn = req.session.loggedIn;
 
-  if (loggedIn) {
-    res.send(`
-      <h3>Hey, ${req.session.username}</h3>
-      <form action='/members' method='get'><button>Go to Members Area</button></form>
-      <form action='/logout' method='post'><button>Log out</button></form>
-    `);
-    return;
-  }
+  const data = {
+    displayNotLoggedIn: !loggedIn ? "flex" : "none",
+    displayLoggedIn: loggedIn ? "flex" : "none",
+    username: req.session.username
+  };
 
-  res.send(`
-    <form action='/login' method='get'><button>Login</button></form>
-    <form action='/signup' method='get'><button>Sign up</button></form>
-  `);
+  res.render("index", data);
 });
 
 app.get("/login", (req, res) => {
-  if (req.session.invalidInputs) {
-    res.send(`
-    <h3>Log into your account</h3>
-    <form action='login' method='post' style='display: flex; flex-direction: column; width: 256px'>
-        <input name='email' type='email' placeholder='Email' required='true'></input>
-        <input name='password' type='password' placeholder='Password' required='true'></input>
-        <button style='width: fit-content'>Submit</button>
-    </form>
-    <h3 style='color: red'>Invalid password</h3>
-  `);
-    return;
-  }
-
-  res.send(`
-    <h3>Log into your account</h3>
-    <form action='login' method='post' style='display: flex; flex-direction: column; width: 256px'>
-        <input name='email' type='email' placeholder='Email' required='true'></input>
-        <input name='password' type='password' placeholder='Password' required='true'></input>
-        <button style='width: fit-content'>Submit</button>
-    </form>
-  `);
+  const data = {
+    displayLogin: "flex",
+    displaySignup: "none",
+  };
+  res.render("login", data);
 });
 
 app.get("/signup", (req, res) => {
-  res.send(`
-    <h3>Create an account</h3>
-    <form action='/signup' method='post' style='display: flex; flex-direction: column; width: 256px'>
-        <input name='username' type='text' placeholder='Username'></input>
-        <input name='email' type='email' placeholder='Email'></input>
-        <input name='password' type='password' placeholder='Password'></input>
-        <button style='width: fit-content'>Submit</button>
-    </form>
-  `);
+  const data = {
+    displayLogin: "none",
+    displaySignup: "flex",
+  };
+
+  res.render("login", data);
+});
+
+app.get("/features", (req, res) => {
+  res.render("features");
+});
+
+app.get("/pricing", (req, res) => {
+  res.render("pricing");
+});
+
+app.get("/FAQ", (req, res) => {
+  res.render("faq");
+});
+
+app.get("/about", (req, res) => {
+  res.render("about");
+});
+
+app.get("/admin", async (req, res) => {
+  if (!req.session.loggedIn) {
+    return res.redirect("/login");
+  }
+
+  const username = req.session.username;
+  const user = await userCollection.findOne({ username });
+
+  if (user.role !== "admin") {
+    return res.status(403).render("403");
+  }
+
+  const users = await userCollection.find({}).toArray();
+  res.render("admin", { users });
 });
 
 app.get("/members", async (req, res) => {
@@ -116,18 +124,29 @@ app.get("/members", async (req, res) => {
   }
 
   const images = ["burger.webp", "pizza.webp", "sushi.webp"];
-  const image = images[Math.floor(Math.random() * images.length)];
 
   const username = req.session.username;
 
-  res.send(`
-    <h1>Hello, ${username}!</h1>
-    <img src='/images/${image}' alt='${image}'>
-    <form action='/logout' method='post'><button>Log out</button></form>
-  `);
+  res.render("members", { username, images });
 });
 
 /** POST **/
+
+app.post("/admin/promote", async (req, res) => {
+  await userCollection.updateOne(
+    { username: req.body.username },
+    { $set: { role: "admin" } },
+  );
+  res.redirect("/admin");
+});
+
+app.post("/admin/demote", async (req, res) => {
+  await userCollection.updateOne(
+    { username: req.body.username },
+    { $set: { role: "user" } },
+  );
+  res.redirect("/admin");
+});
 
 app.post("/signup", async (req, res) => {
   const username = req.body.username;
@@ -152,16 +171,12 @@ app.post("/signup", async (req, res) => {
     username: username,
     password: hashedPassword,
     email: email,
+    role: "user",
   });
 
   req.session.save((err) => {
     res.redirect("/members");
   });
-
-  console.log(
-    "secret length:",
-    (process.env.MONGODB_SESSION_SECRET || "").length,
-  );
 });
 
 app.post("/login", async (req, res) => {
@@ -179,6 +194,7 @@ app.post("/login", async (req, res) => {
 
   req.session.loggedIn = true;
   req.session.invalidInputs = false;
+  req.session.username = user.username;
 
   req.session.save((err) => {
     res.redirect("/members");
@@ -191,7 +207,7 @@ app.post("/logout", (req, res) => {
 });
 
 app.use((req, res) => {
-  res.status(404).send("Page not found - 404");
+  res.status(404).render("404");
 });
 
 app.listen(PORT, () => {

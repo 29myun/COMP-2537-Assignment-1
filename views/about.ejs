@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+<body>
+    <%- include('./templates/header'); %>
+
+    <div class="container my-5">
+
+        <!-- Hero -->
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold">About Us</h1>
+            <p class="lead text-muted">Learn more about who we are and what we do.</p>
+        </div>
+
+        <!-- Mission -->
+        <div class="row align-items-center mb-5">
+            <div class="col-md-6">
+                <h2 class="fw-semibold">Our Mission</h2>
+                <p class="text-muted">We are passionate about delivering great experiences. Our team works hard to build products that make a real difference in people's lives.</p>
+            </div>
+            <div class="col-md-6">
+                <img src="https://placehold.co/600x350" alt="Our Mission" class="img-fluid rounded shadow">
+            </div>
+        </div>
+
+        <!-- Team -->
+        <h2 class="fw-semibold text-center mb-4">Meet the Team</h2>
+        <div class="row justify-content-center g-4 mb-5">
+            <div class="col-sm-6 col-md-4">
+                <div class="card text-center shadow-sm h-100">
+                    <div class="card-body">
+                        <img src="https://placehold.co/80x80" alt="Team Member" class="rounded-circle mb-3">
+                        <h5 class="card-title">Jane Doe</h5>
+                        <p class="text-muted small">Co-Founder & CEO</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-4">
+                <div class="card text-center shadow-sm h-100">
+                    <div class="card-body">
+                        <img src="https://placehold.co/80x80" alt="Team Member" class="rounded-circle mb-3">
+                        <h5 class="card-title">John Smith</h5>
+                        <p class="text-muted small">CTO</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-4">
+                <div class="card text-center shadow-sm h-100">
+                    <div class="card-body">
+                        <img src="https://placehold.co/80x80" alt="Team Member" class="rounded-circle mb-3">
+                        <h5 class="card-title">Emily Lee</h5>
+                        <p class="text-muted small">Lead Designer</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact CTA -->
+        <div class="text-center py-4 bg-light rounded shadow-sm">
+            <h3 class="fw-semibold">Get in Touch</h3>
+            <p class="text-muted">Have questions? We'd love to hear from you.</p>
+            <a href="mailto:hello@example.com" class="btn btn-primary px-4">Contact Us</a>
+        </div>
+
+    </div>
+
+    <%- include('./templates/footer'); %>
+</body>
+</html>
